@@ -13,11 +13,8 @@ class addthis_plugin extends Plugin
 	var $version = '1.0';
 	var $author = 'The b2evo Group';
 	var $group = 'rendering';
+    var $number_of_installs = 1;
 
-	var $plugin;
-
-	var $available_addons;
-	var $enabled_addon;
 
 	/**
 	 * Init
@@ -27,43 +24,9 @@ class addthis_plugin extends Plugin
 		$this->name = T_( 'AddThis' );
 		$this->short_desc = T_('Share contents to your favorite social networks using the AddThis sharing service.');
 		$this->long_desc = T_('Let your visitors share your content to their preferred social networks using the AddThis sharing service.');
-
-		$this->available_addons = $this->get_available_addons(true); // Get the available addons and load their code
 	}
 
 
-	function get_available_addons( $load = false )
-	{
-		require_once('addons/pluginaddon.class.php');
-
-		$available_addons = array();
-
-		$dir = dirname(__FILE__) . '/addons';
-		$dir_content = scandir($dir);
-		
-		foreach ( $dir_content as $element )
-		{
-			$subdir_name = $dir . '/' . $element;
-
-			if ( is_dir($subdir_name) )
-			{
-				$filepath = $subdir_name . '/' . $element . '.class.php';
-				if ( is_file($filepath) )
-				{
-					$available_addons[] = array($element, ucfirst($element));
-
-					if ( $load )
-					{
-						require_once($filepath);
-					}
-				}
-			}
-		}
-
-		return $available_addons;
-	}
-
-	
 	function get_coll_setting_definitions( & $params )
 	{
 		$default_params = array_merge( $params, array(
@@ -76,70 +39,36 @@ class addthis_plugin extends Plugin
 									'type' => 'checkbox',
 									'note' => 'Is the plugin enabled for this collection?',
 								),
-							);
 
-		return array_merge( $plugin_settings, socialshare_addthis::get_coll_setting_definitions(), parent::get_coll_setting_definitions( $default_params ) ); 
+                            'addthis_publisher_id' => array(
+                                'label' => T_('Addthis PubID'),
+                                'size' => 70,
+                                'defaultvalue' => '',
+                                'note' => T_('The ID that you get from your social sharing service.'),
+                            ),
+                        );
+
+		return array_merge( $plugin_settings, parent::get_coll_setting_definitions( $default_params ) );
 			
 	}
 
 
-	function call_method( $object, $method, & $params )
-	{
-		if( method_exists($object, $method) )
-		{
-			$object->$method( $params );
-		}
-	}
-
-
-	function get_coll_enabled_addon()
-	{
-		if( $this->status != 'enabled' )
-		{
-			return false;
-		}
-
-		global $Blog;
-
-		if( $this->get_coll_setting( 'addthis_enabled', $Blog ) )
-		{
-			$this->enabled_addon = new socialshare_addthis($this);
-
-			return true;
-		}
-	}
-
-
-	/** Plugin Hooks **/
 	function SkinBeginHtmlHead( & $params )
 	{
-		if ( $this->get_coll_enabled_addon( $params ) )
-		{ 	
-			$this->call_method( $this->enabled_addon, 'SkinBeginHtmlHead', $params );
-		}
+        global $Blog;
+
+        if( $this->get_coll_setting( 'addthis_enabled', $Blog ) ) {
+            require_js( '//s7.addthis.com/js/300/addthis_widget.js#pubid=' . $this->get_coll_setting( 'addthis_publisher_id', $Blog ), 'rsc_url', true );
+        }
 	}
+
 
 	function RenderItemAsHtml( & $params )
 	{
-		if ( $this->get_coll_enabled_addon( $params ) )
-		{
-			$this->call_method( $this->enabled_addon, 'RenderItemAsHtml', $params );
-		}
-	}
+        $content = & $params['data'];
 
-	function RenderItemAsXml ( & $params )
-	{
-		if ( $this->get_coll_enabled_addon( $params ) )
-		{
-			$this->call_method( $this->enabled_addon, 'RenderItemAsXml', $params );
-		}
-	}
-
-	function ColorboxInit( & $params )
-	{
-		if ( $this->get_coll_enabled_addon( $params ) )
-		{
-			$this->call_method( $this->enabled_addon, 'ColorboxInit', $params );
-		}
+        $content .=  "\n"
+            .'<!-- Go to www.addthis.com/dashboard to customize your tools -->' . "\n"
+            .'<div class="addthis_sharing_toolbox"></div>' . "\n";
 	}
 }
