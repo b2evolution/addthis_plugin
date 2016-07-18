@@ -10,7 +10,7 @@ class addthis_plugin extends Plugin
 	var $name = 'addthis';
 	var $code = 'evo_addthis';
 	var $priority = 50;
-	var $version = '1.0';
+	var $version = '1.5';
 	var $author = 'The b2evo Group';
 	var $group = 'rendering';
     var $number_of_installs = 1;
@@ -65,10 +65,12 @@ class addthis_plugin extends Plugin
 
 	function RenderItemAsHtml( & $params )
 	{
-        $content = & $params['data'];
+        if( $this->get_coll_setting( 'addthis_enabled', $Blog ) ) {
+            $content = & $params['data'];
 
-        $content .=  "\n"
-            .'<!-- Go to www.addthis.com/dashboard to customize your tools -->' . "\n"
-            .'<div class="addthis_sharing_toolbox"></div>' . "\n";
+            $content .=  "\n"
+                .'<!-- Go to www.addthis.com/dashboard to customize your tools -->' . "\n"
+                .'<div class="addthis_sharing_toolbox"></div>' . "\n";
+        }
 	}
 }
